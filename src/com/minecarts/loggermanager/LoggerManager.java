@@ -76,6 +76,14 @@ public class LoggerManager extends JavaPlugin {
                 }
             }
         }
+        
+        log(Level.SEVERE, "Test message of level SEVERE");
+        log(Level.WARNING, "Test message of level WARNING");
+        log(Level.INFO, "Test message of level INFO");
+        log(Level.CONFIG, "Test message of level CONFIG");
+        log(Level.FINE, "Test message of level FINE");
+        log(Level.FINER, "Test message of level FINER");
+        log(Level.FINEST, "Test message of level FINEST");
     }
     
     
