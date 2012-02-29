@@ -5,6 +5,7 @@ website: http://minecarts.com/
 
 main: com.minecarts.loggermanager.LoggerManager
 version: ${pom.version}
+load: STARTUP
 
 commands:
     loggermanager:

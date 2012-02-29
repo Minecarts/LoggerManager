@@ -4,10 +4,13 @@ import java.util.logging.Handler;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Filter;
+import java.util.logging.LogRecord;
 import java.text.MessageFormat;
 
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,9 +22,11 @@ import org.bukkit.command.Command;
 
 
 public class LoggerManager extends JavaPlugin {
-    private final static Logger topLogger = Logger.getLogger("");
+    protected Level defaultLevel;
+    protected Map<String, Level> levels = new HashMap<String, Level>();
     
-    public void onEnable() {
+    @Override
+    public void onEnable() {        
         reloadConfig();
         
         // internal plugin commands
@@ -40,7 +45,6 @@ public class LoggerManager extends JavaPlugin {
             }
         });
         
-        
         log("Version {0} enabled.", getDescription().getVersion());
     }
     
@@ -50,60 +54,63 @@ public class LoggerManager extends JavaPlugin {
         super.reloadConfig();
         final FileConfiguration config = getConfig();
         
-        String defaultLevel = config.getString("default.level");
-        if(defaultLevel != null) {
-            for(Handler handler : topLogger.getHandlers()) {
-                if(handler instanceof ConsoleHandler) {
-                    setLevel(handler, defaultLevel);
-                    log(Level.CONFIG, "ConsoleHandler {0} level set to {1}", handler, defaultLevel);
-                }
+        defaultLevel = getLevel(config.getString("default.level"), Level.INFO);
+        log("Default level set to {0}", defaultLevel);
+        
+        for(Handler handler : Logger.getLogger("").getHandlers()) {
+            if(handler instanceof ConsoleHandler) {
+                handler.setFilter(new Filter() {
+                    public boolean isLoggable(LogRecord log) {
+                        Level level = levels.get(log.getLoggerName());
+                        return log.getLevel().intValue() >= (level == null ? defaultLevel : level).intValue();
+                    }
+                });
+                handler.setLevel(Level.ALL);
             }
         }
         
+        levels.clear();
         // TODO: revert to getMapList once null check is added to Bukkit
         List<Object> loggerSettings = config.getList("loggers");
         if(loggerSettings != null) {
             for(Object settings : loggerSettings) {
                 if(settings instanceof Map) {
-                    Object name = ((Map<String, Object>) settings).get("name");
-                    if(name == null || !(name instanceof String)) continue;
-
-                    Logger logger = Logger.getLogger((String) name);
+                    Object logger = ((Map<String, Object>) settings).get("name");
+                    if(logger == null || !(logger instanceof String)) continue;
                     
-                    Object level = ((Map<String, Object>) settings).get("level");
-                    if(level != null && level instanceof String) setLevel(logger, (String) level);
-                    log(Level.CONFIG, "Logger \"{0}\" level set to {1}", logger.getName(), level);
+                    Level level = getLevel((String) ((Map<String, Object>) settings).get("level"));
+                    if(level != null) {
+                        levels.put((String) logger, level);
+                        log("Logger \"{0}\" level set to {1}", logger, level);
+                    }
                 }
             }
         }
         
-        log(Level.SEVERE, "Test message of level SEVERE");
-        log(Level.WARNING, "Test message of level WARNING");
-        log(Level.INFO, "Test message of level INFO");
-        log(Level.CONFIG, "Test message of level CONFIG");
-        log(Level.FINE, "Test message of level FINE");
-        log(Level.FINER, "Test message of level FINER");
-        log(Level.FINEST, "Test message of level FINEST");
+        if(config.getBoolean("test")) {
+            log(Level.SEVERE, "Test message of level SEVERE");
+            log(Level.WARNING, "Test message of level WARNING");
+            log(Level.INFO, "Test message of level INFO");
+            log(Level.CONFIG, "Test message of level CONFIG");
+            log(Level.FINE, "Test message of level FINE");
+            log(Level.FINER, "Test message of level FINER");
+            log(Level.FINEST, "Test message of level FINEST");
+        }
     }
     
     
-    private void setLevel(Logger logger, String level) {
+    public static Level getLevel(String name) {
+        return getLevel(name, null);
+    }
+    public static Level getLevel(String name, Level defaultLevel) {
         try {
-            logger.setLevel(Level.parse(level));
+            Level level = Level.parse(name);
+            return level == null ? defaultLevel : level;
         }
         catch(Exception e) {
-            e.printStackTrace();
+            return defaultLevel;
         }
     }
-    private void setLevel(Handler logger, String level) {
-        try {
-            logger.setLevel(Level.parse(level));
-        }
-        catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
     
     
     public void log(String message) {
