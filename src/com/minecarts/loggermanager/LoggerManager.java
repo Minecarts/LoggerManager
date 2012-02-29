@@ -58,15 +58,13 @@ public class LoggerManager extends JavaPlugin {
         log("Default level set to {0}", defaultLevel);
         
         for(Handler handler : Logger.getLogger("").getHandlers()) {
-            if(handler instanceof ConsoleHandler) {
-                handler.setFilter(new Filter() {
-                    public boolean isLoggable(LogRecord log) {
-                        Level level = levels.get(log.getLoggerName());
-                        return log.getLevel().intValue() >= (level == null ? defaultLevel : level).intValue();
-                    }
-                });
-                handler.setLevel(Level.ALL);
-            }
+            handler.setFilter(new Filter() {
+                public boolean isLoggable(LogRecord log) {
+                    Level level = levels.get(log.getLoggerName());
+                    return log.getLevel().intValue() >= (level == null ? defaultLevel : level).intValue();
+                }
+            });
+            handler.setLevel(Level.ALL);
         }
         
         levels.clear();
