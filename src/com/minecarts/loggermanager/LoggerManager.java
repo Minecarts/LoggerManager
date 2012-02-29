@@ -1,5 +1,7 @@
 package com.minecarts.loggermanager;
 
+import java.util.logging.Handler;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.text.MessageFormat;
@@ -17,8 +19,7 @@ import org.bukkit.command.Command;
 
 
 public class LoggerManager extends JavaPlugin {
-    static final Logger logger = Logger.getLogger("com.minecarts.loggermanager");
-    
+    private final static Logger topLogger = Logger.getLogger("");
     
     public void onEnable() {
         reloadConfig();
@@ -49,20 +50,44 @@ public class LoggerManager extends JavaPlugin {
         super.reloadConfig();
         final FileConfiguration config = getConfig();
         
-        List<Map<String, Object>> loggerSettings = config.getMapList("loggers");
-        if(loggerSettings != null) {
-            for(Map<String, Object> settings : loggerSettings) {
-                Object name = settings.get("name");
-                if(name == null || !(name instanceof String)) continue;
-                
-                Logger logger = Logger.getLogger((String) name);
-                try {
-                    logger.setLevel(Level.parse((String) settings.get("level")));
-                }
-                catch(Exception e) {
-                    e.printStackTrace();
+        if(config.isString("default.level")) {
+            for(Handler handler : topLogger.getHandlers()) {
+                if(handler instanceof ConsoleHandler) {
+                    setLevel(handler, config.getString("default.level"));
                 }
             }
+        }
+        
+        // TODO: revert to getMapList once null check is added to Bukkit
+        if(config.isList("loggers")) {
+            List<Object> loggerSettings = config.getList("loggers");
+            for(Object settings : loggerSettings) {
+                if(settings instanceof Map) {
+                    Object name = ((Map<String, Object>) settings).get("name");
+                    if(name == null || !(name instanceof String)) continue;
+
+                    Logger logger = Logger.getLogger((String) name);
+                    setLevel(logger, (String) ((Map<String, Object>) settings).get("level"));
+                }
+            }
+        }
+    }
+    
+    
+    private void setLevel(Logger logger, String level) {
+        try {
+            logger.setLevel(Level.parse(level));
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private void setLevel(Handler logger, String level) {
+        try {
+            logger.setLevel(Level.parse(level));
+        }
+        catch(Exception e) {
+            e.printStackTrace();
         }
     }
     
@@ -72,7 +97,7 @@ public class LoggerManager extends JavaPlugin {
         log(Level.INFO, message);
     }
     public void log(Level level, String message) {
-        logger.log(level, MessageFormat.format("{0}> {1}", getDescription().getName(), message));
+        getLogger().log(level, message);
     }
     public void log(String message, Object... args) {
         log(MessageFormat.format(message, args));

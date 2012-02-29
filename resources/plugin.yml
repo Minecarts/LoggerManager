@@ -8,7 +8,7 @@ version: ${pom.version}
 
 commands:
     loggermanager:
-    	aliases: [ log, logs, logger, logging, debug ]
+        aliases: [ log, logs, logger, logging, debug ]
         description: LoggerManager internal plugin commands
         usage: /<command> reload
         

@@ -2,7 +2,9 @@
 
 ### Example `config.yml`
 
-```yml
+```yaml
+default.level: INFO # ConsoleHandler level
+
 loggers:
 
   - name: com.minecarts.loggermanager
