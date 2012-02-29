@@ -50,24 +50,29 @@ public class LoggerManager extends JavaPlugin {
         super.reloadConfig();
         final FileConfiguration config = getConfig();
         
-        if(config.isString("default.level")) {
+        String defaultLevel = config.getString("default.level");
+        if(defaultLevel != null) {
             for(Handler handler : topLogger.getHandlers()) {
                 if(handler instanceof ConsoleHandler) {
-                    setLevel(handler, config.getString("default.level"));
+                    setLevel(handler, defaultLevel);
+                    log(Level.CONFIG, "ConsoleHandler {0} level set to {1}", handler, defaultLevel);
                 }
             }
         }
         
         // TODO: revert to getMapList once null check is added to Bukkit
-        if(config.isList("loggers")) {
-            List<Object> loggerSettings = config.getList("loggers");
+        List<Object> loggerSettings = config.getList("loggers");
+        if(loggerSettings != null) {
             for(Object settings : loggerSettings) {
                 if(settings instanceof Map) {
                     Object name = ((Map<String, Object>) settings).get("name");
                     if(name == null || !(name instanceof String)) continue;
 
                     Logger logger = Logger.getLogger((String) name);
-                    setLevel(logger, (String) ((Map<String, Object>) settings).get("level"));
+                    
+                    Object level = ((Map<String, Object>) settings).get("level");
+                    if(level != null && level instanceof String) setLevel(logger, (String) level);
+                    log(Level.CONFIG, "Logger \"{0}\" level set to {1}", logger.getName(), level);
                 }
             }
         }
