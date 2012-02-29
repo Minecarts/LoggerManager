@@ -1,0 +1,19 @@
+name: LoggerManager
+description: Manage Logger instances via Bukkit config
+author: megabytes
+website: http://minecarts.com/
+
+main: com.minecarts.loggermanager.LoggerManager
+version: ${pom.version}
+
+commands:
+    loggermanager:
+    	aliases: [ log, logs, logger, logging, debug ]
+        description: LoggerManager internal plugin commands
+        usage: /<command> reload
+        
+permissions:
+    loggermanager:
+        reload:
+            description: Reload LoggerManager config
+            default: op
