@@ -68,20 +68,14 @@ public class LoggerManager extends JavaPlugin {
         }
         
         levels.clear();
-        // TODO: revert to getMapList once null check is added to Bukkit
-        List<Object> loggerSettings = config.getList("loggers");
-        if(loggerSettings != null) {
-            for(Object settings : loggerSettings) {
-                if(settings instanceof Map) {
-                    Object logger = ((Map<String, Object>) settings).get("name");
-                    if(logger == null || !(logger instanceof String)) continue;
-                    
-                    Level level = getLevel((String) ((Map<String, Object>) settings).get("level"));
-                    if(level != null) {
-                        levels.put((String) logger, level);
-                        log("Logger \"{0}\" level set to {1}", logger, level);
-                    }
-                }
+        for(Map<?, ?> settings : config.getMapList("loggers")) {
+            String logger = (String) settings.get("name");
+            if(logger == null) continue;
+
+            Level level = getLevel((String) settings.get("level"));
+            if(level != null) {
+                levels.put((String) logger, level);
+                log("Logger \"{0}\" level set to {1}", logger, level);
             }
         }
         
