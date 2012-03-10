@@ -23,7 +23,9 @@ import org.bukkit.command.Command;
 
 public class LoggerManager extends JavaPlugin {
     protected Level defaultLevel;
+    protected boolean prefix;
     protected Map<String, Level> levels = new HashMap<String, Level>();
+    protected Map<String, String> prefixes = new HashMap<String, String>();
     
     @Override
     public void onEnable() {        
@@ -57,10 +59,23 @@ public class LoggerManager extends JavaPlugin {
         defaultLevel = getLevel(config.getString("default.level"), Level.INFO);
         log("Default level set to {0}", defaultLevel);
         
+        if(prefix = config.getBoolean("prefix")) {
+            log("Prefixing logger names to log messages");
+        }
+        
         for(Handler handler : Logger.getLogger("").getHandlers()) {
             handler.setFilter(new Filter() {
                 public boolean isLoggable(LogRecord log) {
-                    Level level = levels.get(log.getLoggerName());
+                    String logger = log.getLoggerName();
+                    if(prefixes.containsKey(logger)) {
+                        log.setMessage(prefixes.get(logger) + log.getMessage());
+                    }
+                    
+                    if(prefix) {
+                        log.setMessage(String.format("%s> %s", logger, log.getMessage()));
+                    }
+                    
+                    Level level = levels.get(logger);
                     return log.getLevel().intValue() >= (level == null ? defaultLevel : level).intValue();
                 }
             });
@@ -68,14 +83,21 @@ public class LoggerManager extends JavaPlugin {
         }
         
         levels.clear();
+        prefixes.clear();
         for(Map<?, ?> settings : config.getMapList("loggers")) {
             String logger = (String) settings.get("name");
             if(logger == null) continue;
 
             Level level = getLevel((String) settings.get("level"));
             if(level != null) {
-                levels.put((String) logger, level);
+                levels.put(logger, level);
                 log("Logger \"{0}\" level set to {1}", logger, level);
+            }
+            
+            String prefix = (String) settings.get("prefix");
+            if(prefix != null) {
+                prefixes.put(logger, prefix);
+                log("Logger \"{0}\" messages will be prefixed with \"{1}\"", logger, prefix);
             }
         }
         
