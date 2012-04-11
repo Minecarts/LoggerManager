@@ -67,12 +67,22 @@ public class LoggerManager extends JavaPlugin {
             handler.setFilter(new Filter() {
                 public boolean isLoggable(LogRecord log) {
                     String logger = log.getLoggerName();
-                    if(prefixes.containsKey(logger)) {
-                        log.setMessage(prefixes.get(logger) + log.getMessage());
+                    String customPrefix = prefixes.get(logger);
+                    String message = log.getMessage();
+                    
+                    if(customPrefix != null && !message.startsWith(customPrefix)) {
+                        message = customPrefix + message;
                     }
                     
                     if(prefix) {
-                        log.setMessage(String.format("%s> %s", logger, log.getMessage()));
+                        String loggerPrefix = logger + "> ";
+                        if(!message.startsWith(loggerPrefix)) {
+                            message = loggerPrefix + message;
+                        }
+                    }
+                    
+                    if(!log.getMessage().equals(message)) {
+                        log.setMessage(message);
                     }
                     
                     Level level = levels.get(logger);
